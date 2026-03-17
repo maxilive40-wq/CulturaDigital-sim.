@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Nanopatrones - Nanolitografía</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f0f4f8; color: #333; margin: 0; padding: 20px; }
+        canvas { background: #fff; border: 5px solid #2c3e50; border-radius: 50%; cursor: crosshair; touch-action: none; max-width: 90%; }
+        .controls { margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background: #27ae60; color: white; }
+        .info { background: #fff; padding: 15px; border-radius: 8px; margin: 10px auto; max-width: 500px; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <h2>Simulador: Litografía por Tensión Superficial</h2>
+    
+    <div class="info">
+        <strong>Instrucción:</strong> Haz clic o toca en el centro del plato para aplicar el "agente litográfico" y observa el autoensamblado de las nanoestructuras.
+    </div>
+
+    <canvas id="nanoCanvas" width="400" height="400"></canvas>
+
+    <div class="controls">
+        <button onclick="resetSim()">Reiniciar Mezcla</button>
+        <p><em>Concepto: Ruptura de cohesión molecular</em></p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('nanoCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y;
+                this.color = color;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.size = 6;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.vx *= 0.95; this.vy *= 0.95; // Fricción del líquido
+            }
+        }
+
+        function init() {
+            particles = [];
+            const colors = ['#e74c3c', '#3498db', '#f1c40f', '#9b59b6'];
+            for(let i=0; i<100; i++) {
+                particles.push(new Particle(
+                    200 + (Math.random() - 0.5) * 40,
+                    200 + (Math.random() - 0.5) * 40,
+                    colors[Math.floor(Math.random() * colors.length)]
+                ));
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+
+        function applyLithography(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+            particles.forEach(p => {
+                const dx = p.x - x;
+                const dy = p.y - y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if(dist < 100) {
+                    const force = (100 - dist) / 10;
+                    p.vx += (dx / dist) * force;
+                    p.vy += (dy / dist) * force;
+                }
+            });
+        }
+
+        canvas.addEventListener('mousedown', applyLithography);
+        canvas.addEventListener('touchstart', applyLithography);
+
+        function resetSim() { init(); }
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
